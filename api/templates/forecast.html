@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forecast Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f7f7f7;
+        padding: 2rem;
+      }
+      canvas {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🌤️ 72-Hour Temperature Forecast</h2>
+    <canvas id="forecastChart" width="800" height="400"></canvas>
+    <h2>Forecast History</h2>
+    <canvas id="historyChart" height="100"></canvas>
+
+    <script>
+      async function fetchHistory() {
+        const res = await fetch("/history");
+        const data = await res.json();
+        const timestamps = data.data.map((e) => e.timestamp);
+        const preds = data.data.map((e) => e.pred);
+        const trues = data.data.map((e) => e.true);
+
+        new Chart(document.getElementById("historyChart"), {
+          type: "line",
+          data: {
+            labels: timestamps,
+            datasets: [
+              {
+                label: "Predicted",
+                data: preds,
+                borderColor: "blue",
+                fill: false,
+              },
+              {
+                label: "Real",
+                data: trues,
+                borderColor: "red",
+                fill: false,
+              },
+            ],
+          },
+        });
+      }
+
+      fetchHistory();
+    </script>
+
+    <script>
+      async function drawForecast() {
+        const res = await fetch("/forecast");
+        const data = await res.json();
+        const temps = data.forecast;
+
+        const labels = Array.from(
+          { length: temps.length },
+          (_, i) => `Hour ${i + 1}`
+        );
+
+        new Chart(document.getElementById("forecastChart"), {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Predicted Temperature (°C)",
+                data: temps,
+                borderColor: "rgba(75,192,192,1)",
+                backgroundColor: "rgba(75,192,192,0.2)",
+                fill: true,
+                tension: 0.3,
+                pointRadius: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              title: {
+                display: true,
+                text: "Next 72 Hours",
+              },
+            },
+          },
+        });
+      }
+
+      drawForecast();
+    </script>
+    <script src="../static/js/forecast.js"></script>
+  </body>
+</html>
